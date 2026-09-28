@@ -695,6 +695,9 @@ describe('GlobalConfig', () => {
 			ownerFirstName: 'Instance',
 			ownerLastName: 'Owner',
 			ownerPasswordHash: '',
+			instanceApiKeyManagedByEnv: false,
+			instanceApiKey: '',
+			instanceApiKeyScopes: '',
 			ssoManagedByEnv: false,
 			oidcClientId: '',
 			oidcClientSecret: '',
@@ -906,6 +909,19 @@ describe('GlobalConfig', () => {
 		expect(config).toMatchObject(expected);
 		expect(expected).toMatchObject(config);
 		expect(readFileSyncMock).toHaveBeenCalled();
+	});
+
+	it('should read the instance API key from a file', () => {
+		const apiKeyFile = '/path/to/instance/api-key';
+		process.env = {
+			N8N_INSTANCE_API_KEY_FILE: apiKeyFile,
+		};
+		readFileSyncMock.mockReturnValueOnce('n8n_api_test');
+
+		const config = Container.get(GlobalConfig);
+
+		expect(config.instanceSettingsLoader.instanceApiKey).toBe('n8n_api_test');
+		expect(readFileSyncMock).toHaveBeenCalledWith(apiKeyFile, 'utf8');
 	});
 
 	it('should warn when _FILE env variable value contains whitespace', () => {

@@ -2,6 +2,7 @@ import { Logger } from '@n8n/backend-common';
 import { Service } from '@n8n/di';
 
 import { CommunityPackagesInstanceSettingsLoader } from './loaders/community-packages.instance-settings-loader';
+import { InstanceApiKeyInstanceSettingsLoader } from './loaders/instance-api-key.instance-settings-loader';
 import { LogStreamingInstanceSettingsLoader } from './loaders/log-streaming.instance-settings-loader';
 import { McpSettingsLoader } from './loaders/mcp-settings.loader';
 import { OwnerInstanceSettingsLoader } from './loaders/owner.instance-settings-loader';
@@ -15,6 +16,7 @@ export class InstanceSettingsLoaderService {
 	constructor(
 		private logger: Logger,
 		private readonly ownerLoader: OwnerInstanceSettingsLoader,
+		private readonly instanceApiKeyLoader: InstanceApiKeyInstanceSettingsLoader,
 		private readonly ssoLoader: SsoInstanceSettingsLoader,
 		private readonly securityPolicyLoader: SecurityPolicyInstanceSettingsLoader,
 		private readonly logStreamingLoader: LogStreamingInstanceSettingsLoader,
@@ -26,6 +28,7 @@ export class InstanceSettingsLoaderService {
 
 	async init(): Promise<void> {
 		await this.run('owner', async () => await this.ownerLoader.run());
+		await this.run('instance-api-key', async () => await this.instanceApiKeyLoader.run());
 		await this.run('sso', async () => await this.ssoLoader.run());
 		await this.run('security-policy', async () => await this.securityPolicyLoader.run());
 		await this.run('log-streaming', async () => await this.logStreamingLoader.run());
