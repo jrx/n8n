@@ -440,17 +440,20 @@ export type RelayEventMap = {
 	'public-api-key-created': {
 		user: UserLike;
 		publicApi: boolean;
+		managedByEnv?: boolean;
 	};
 
 	'public-api-key-deleted': {
 		user: UserLike;
 		publicApi: boolean;
 		isOwn: boolean;
+		managedByEnv?: boolean;
 	};
 
 	'public-api-key-rotated': {
 		user: UserLike;
 		publicApi: boolean;
+		managedByEnv?: boolean;
 	};
 
 	'public-api-invoked': {

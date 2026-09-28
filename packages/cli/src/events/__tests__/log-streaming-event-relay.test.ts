@@ -1953,6 +1953,65 @@ describe('LogStreamingEventRelay', () => {
 				},
 			});
 		});
+
+		it.each([
+			['public-api-key-created', 'n8n.audit.user.api.created'],
+			['public-api-key-rotated', 'n8n.audit.user.api.rotated'],
+		] as const)('should mark an environment-managed `%s` event', (eventName, auditEventName) => {
+			const event = {
+				user: {
+					id: 'owner-1',
+					email: 'owner@example.com',
+					firstName: 'Instance',
+					lastName: 'Owner',
+					role: { slug: GLOBAL_OWNER_ROLE.slug },
+				},
+				publicApi: false,
+				managedByEnv: true,
+			};
+
+			eventService.emit(eventName, event);
+
+			expect(eventBus.sendAuditEvent).toHaveBeenCalledWith({
+				eventName: auditEventName,
+				payload: {
+					userId: 'owner-1',
+					_email: 'owner@example.com',
+					_firstName: 'Instance',
+					_lastName: 'Owner',
+					globalRole: 'global:owner',
+					managed_by_env: true,
+				},
+			});
+		});
+
+		it('should mark an environment-managed `public-api-key-deleted` event', () => {
+			eventService.emit('public-api-key-deleted', {
+				user: {
+					id: 'owner-1',
+					email: 'owner@example.com',
+					firstName: 'Instance',
+					lastName: 'Owner',
+					role: { slug: GLOBAL_OWNER_ROLE.slug },
+				},
+				publicApi: false,
+				managedByEnv: true,
+				isOwn: true,
+			});
+
+			expect(eventBus.sendAuditEvent).toHaveBeenCalledWith({
+				eventName: 'n8n.audit.user.api.deleted',
+				payload: {
+					userId: 'owner-1',
+					_email: 'owner@example.com',
+					_firstName: 'Instance',
+					_lastName: 'Owner',
+					globalRole: 'global:owner',
+					is_own: true,
+					managed_by_env: true,
+				},
+			});
+		});
 	});
 
 	describe('execution events', () => {

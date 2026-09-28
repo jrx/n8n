@@ -658,26 +658,34 @@ export class LogStreamingEventRelay extends EventRelay {
 	// #region Public API
 
 	@Redactable()
-	private publicApiKeyCreated({ user }: RelayEventMap['public-api-key-created']) {
+	private publicApiKeyCreated({ user, managedByEnv }: RelayEventMap['public-api-key-created']) {
 		void this.eventBus.sendAuditEvent({
 			eventName: 'n8n.audit.user.api.created',
-			payload: user,
+			payload: { ...user, ...(managedByEnv ? { managed_by_env: true } : {}) },
 		});
 	}
 
 	@Redactable()
-	private publicApiKeyDeleted({ user, isOwn }: RelayEventMap['public-api-key-deleted']) {
+	private publicApiKeyDeleted({
+		user,
+		isOwn,
+		managedByEnv,
+	}: RelayEventMap['public-api-key-deleted']) {
 		void this.eventBus.sendAuditEvent({
 			eventName: 'n8n.audit.user.api.deleted',
-			payload: { ...user, is_own: isOwn },
+			payload: {
+				...user,
+				is_own: isOwn,
+				...(managedByEnv ? { managed_by_env: true } : {}),
+			},
 		});
 	}
 
 	@Redactable()
-	private publicApiKeyRotated({ user }: RelayEventMap['public-api-key-rotated']) {
+	private publicApiKeyRotated({ user, managedByEnv }: RelayEventMap['public-api-key-rotated']) {
 		void this.eventBus.sendAuditEvent({
 			eventName: 'n8n.audit.user.api.rotated',
-			payload: user,
+			payload: { ...user, ...(managedByEnv ? { managed_by_env: true } : {}) },
 		});
 	}
 
