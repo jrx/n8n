@@ -27,6 +27,18 @@ export class InstanceSettingsLoaderConfig {
 	@Env('N8N_INSTANCE_OWNER_PASSWORD_HASH')
 	ownerPasswordHash: string = '';
 
+	/** When true, the instance owner's Public API key is managed by environment variables. */
+	@Env('N8N_INSTANCE_API_KEY_MANAGED_BY_ENV')
+	instanceApiKeyManagedByEnv: boolean = false;
+
+	/** Public API key to reconcile for the instance owner. */
+	@Env('N8N_INSTANCE_API_KEY')
+	instanceApiKey: string = '';
+
+	/** Optional comma-separated scopes for the env-managed Public API key. */
+	@Env('N8N_INSTANCE_API_KEY_SCOPES')
+	instanceApiKeyScopes: string = '';
+
 	// --- SSO ---
 
 	/** When true, SSO connection config is read from env vars on every startup and the UI is locked. */

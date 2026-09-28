@@ -26,6 +26,8 @@ export type ApiKey = {
 	scopes: ApiKeyScope[];
 	/** ISO timestamp of the last time the key authenticated a request, or null if never used. */
 	lastUsedAt: string | null;
+	/** Whether environment variables control this key. */
+	managedByEnv: boolean;
 	/** The user who owns this key. Populated on list endpoints; absent on create. */
 	owner?: ApiKeyOwner;
 };

@@ -3,6 +3,7 @@ import { mock } from 'vitest-mock-extended';
 
 import { InstanceSettingsLoaderService } from '../instance-settings-loader.service';
 import type { CommunityPackagesInstanceSettingsLoader } from '../loaders/community-packages.instance-settings-loader';
+import type { InstanceApiKeyInstanceSettingsLoader } from '../loaders/instance-api-key.instance-settings-loader';
 import type { LogStreamingInstanceSettingsLoader } from '../loaders/log-streaming.instance-settings-loader';
 import type { McpSettingsLoader } from '../loaders/mcp-settings.loader';
 import type { OwnerInstanceSettingsLoader } from '../loaders/owner.instance-settings-loader';
@@ -12,6 +13,7 @@ import type { SsoInstanceSettingsLoader } from '../loaders/sso/sso.instance-sett
 describe('InstanceSettingsLoaderService', () => {
 	const logger = mock<Logger>({ scoped: vi.fn().mockReturnThis() });
 	const ownerLoader = mock<OwnerInstanceSettingsLoader>();
+	const instanceApiKeyLoader = mock<InstanceApiKeyInstanceSettingsLoader>();
 	const ssoLoader = mock<SsoInstanceSettingsLoader>();
 	const securityPolicyLoader = mock<SecurityPolicyInstanceSettingsLoader>();
 	const logStreamingLoader = mock<LogStreamingInstanceSettingsLoader>();
@@ -22,6 +24,7 @@ describe('InstanceSettingsLoaderService', () => {
 		vi.resetAllMocks();
 		logger.scoped.mockReturnThis();
 		ownerLoader.run.mockResolvedValue('skipped');
+		instanceApiKeyLoader.run.mockResolvedValue('skipped');
 		ssoLoader.run.mockResolvedValue('skipped');
 		securityPolicyLoader.run.mockResolvedValue('skipped');
 		logStreamingLoader.run.mockResolvedValue('skipped');
@@ -33,6 +36,7 @@ describe('InstanceSettingsLoaderService', () => {
 		new InstanceSettingsLoaderService(
 			logger,
 			ownerLoader,
+			instanceApiKeyLoader,
 			ssoLoader,
 			securityPolicyLoader,
 			logStreamingLoader,
@@ -44,6 +48,13 @@ describe('InstanceSettingsLoaderService', () => {
 		await createService().init();
 
 		expect(ownerLoader.run).toHaveBeenCalled();
+		expect(instanceApiKeyLoader.run).toHaveBeenCalled();
+		expect(ownerLoader.run.mock.invocationCallOrder[0]).toBeLessThan(
+			instanceApiKeyLoader.run.mock.invocationCallOrder[0],
+		);
+		expect(instanceApiKeyLoader.run.mock.invocationCallOrder[0]).toBeLessThan(
+			ssoLoader.run.mock.invocationCallOrder[0],
+		);
 		expect(ssoLoader.run).toHaveBeenCalled();
 		expect(securityPolicyLoader.run).toHaveBeenCalled();
 		expect(logStreamingLoader.run).toHaveBeenCalled();
@@ -57,6 +68,7 @@ describe('InstanceSettingsLoaderService', () => {
 		await expect(createService().init()).rejects.toThrow('sso failure');
 
 		expect(ownerLoader.run).toHaveBeenCalled();
+		expect(instanceApiKeyLoader.run).toHaveBeenCalled();
 		expect(securityPolicyLoader.run).not.toHaveBeenCalled();
 		expect(logStreamingLoader.run).not.toHaveBeenCalled();
 		expect(mcpLoader.run).not.toHaveBeenCalled();

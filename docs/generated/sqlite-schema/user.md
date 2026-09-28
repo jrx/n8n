@@ -358,6 +358,7 @@ erDiagram
   varchar_36_ id PK
   varchar_100_ label
   datetime_3_ lastUsedAt
+  boolean managedByEnv
   TEXT scopes
   datetime_3_ updatedAt
   varchar userId FK

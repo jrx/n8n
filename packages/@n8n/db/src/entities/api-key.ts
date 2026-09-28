@@ -31,6 +31,9 @@ export class ApiKey extends WithTimestampsAndStringId {
 	@Column({ type: String, default: 'public-api' })
 	audience: ApiKeyAudience;
 
+	@Column({ type: Boolean, default: false })
+	managedByEnv: boolean;
+
 	@DateTimeColumn({ nullable: true })
 	lastUsedAt: Date | null;
 }

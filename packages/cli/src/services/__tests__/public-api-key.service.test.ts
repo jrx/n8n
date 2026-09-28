@@ -4,6 +4,7 @@ import { hasGlobalScope } from '@n8n/permissions';
 import { mock } from 'vitest-mock-extended';
 
 import { BadRequestError } from '@/errors/response-errors/bad-request.error';
+import { ConflictError } from '@/errors/response-errors/conflict.error';
 import { NotFoundError } from '@/errors/response-errors/not-found.error';
 import type { UserManagementMailer } from '@/user-management/email';
 
@@ -35,6 +36,7 @@ describe('PublicApiKeyService', () => {
 			id: 'key-1',
 			userId: 'owner-1',
 			user: mock<User>({ id: 'owner-1' }),
+			managedByEnv: false,
 		});
 
 		const owner = mock<User>({ id: 'owner-1' });
@@ -90,6 +92,46 @@ describe('PublicApiKeyService', () => {
 			await expect(service.deleteApiKey(owner, 'missing')).rejects.toThrow(NotFoundError);
 			expect(mailer.notifyApiKeyRevoked).not.toHaveBeenCalled();
 		});
+
+		it.each([owner, admin])('rejects managed key deletion by $id', async (caller) => {
+			hasGlobalScopeMock.mockReturnValue(true);
+			apiKeyRepository.findOne.mockResolvedValue({ ...apiKey, managedByEnv: true });
+
+			await expect(service.deleteApiKey(caller, 'key-1')).rejects.toThrow(ConflictError);
+			expect(apiKeyRepository.delete).not.toHaveBeenCalled();
+		});
+
+		it('limits a member lookup to their own keys before the managed check', async () => {
+			const member = mock<User>({ id: 'member-1' });
+			hasGlobalScopeMock.mockReturnValue(false);
+			apiKeyRepository.findOne.mockResolvedValue(null);
+
+			await expect(service.deleteApiKey(member, 'key-1')).rejects.toThrow(NotFoundError);
+			expect(apiKeyRepository.findOne).toHaveBeenCalledWith({
+				where: { id: 'key-1', audience: 'public-api', userId: member.id },
+				relations: { user: true },
+			});
+			expect(apiKeyRepository.delete).not.toHaveBeenCalled();
+			expect(mailer.notifyApiKeyRevoked).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('updateApiKeyForUser', () => {
+		const owner = mock<User>({ id: 'owner-1' });
+
+		it('rejects updates to an environment-managed key', async () => {
+			apiKeyRepository.findOne.mockResolvedValue(
+				mock<ApiKey>({ id: 'key-1', userId: owner.id, managedByEnv: true }),
+			);
+
+			await expect(
+				service.updateApiKeyForUser(owner, 'key-1', {
+					label: 'new label',
+					scopes: ['workflow:read'],
+				}),
+			).rejects.toThrow(ConflictError);
+			expect(apiKeyRepository.update).not.toHaveBeenCalled();
+		});
 	});
 
 	describe('rotateApiKey', () => {
@@ -102,6 +144,7 @@ describe('PublicApiKeyService', () => {
 				userId: 'owner-1',
 				apiKey: 'old-token',
 				lastUsedAt: new Date(),
+				managedByEnv: false,
 			});
 
 			apiKeyRepository.findOne.mockResolvedValue(existingKey);
@@ -136,11 +179,25 @@ describe('PublicApiKeyService', () => {
 		it('throws BadRequestError and leaves the token untouched when the key is expired', async () => {
 			const pastExp = Math.floor(Date.now() / 1000) - 3600;
 			apiKeyRepository.findOne.mockResolvedValue(
-				mock<ApiKey>({ id: 'key-1', userId: 'owner-1', apiKey: 'old-token' }),
+				mock<ApiKey>({
+					id: 'key-1',
+					userId: 'owner-1',
+					apiKey: 'old-token',
+					managedByEnv: false,
+				}),
 			);
 			jwtService.decode.mockReturnValue({ exp: pastExp });
 
 			await expect(service.rotateApiKey(owner, 'key-1')).rejects.toThrow(BadRequestError);
+			expect(apiKeyRepository.update).not.toHaveBeenCalled();
+		});
+
+		it('rejects rotation of an environment-managed key', async () => {
+			apiKeyRepository.findOne.mockResolvedValue(
+				mock<ApiKey>({ id: 'key-1', userId: owner.id, managedByEnv: true }),
+			);
+
+			await expect(service.rotateApiKey(owner, 'key-1')).rejects.toThrow(ConflictError);
 			expect(apiKeyRepository.update).not.toHaveBeenCalled();
 		});
 	});

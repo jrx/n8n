@@ -139,6 +139,7 @@ function makeKey(overrides: Partial<ApiKey> = {}): ApiKey {
 		expiresAt: null,
 		scopes: ['user:create'],
 		lastUsedAt: null,
+		managedByEnv: false,
 		owner: ownerFixture,
 		...overrides,
 	};

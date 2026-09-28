@@ -4,7 +4,7 @@ import { useI18n } from '@n8n/i18n';
 import { DateTime } from 'luxon';
 import type { ApiKey } from '@n8n/api-types';
 import type { TableHeader, TableOptions } from '@n8n/design-system';
-import { N8nActionDropdown, N8nDataTableServer, N8nText } from '@n8n/design-system';
+import { N8nActionDropdown, N8nBadge, N8nDataTableServer, N8nText } from '@n8n/design-system';
 import type { ActionDropdownItem } from '@n8n/design-system';
 
 import ApiKeyLabelCell from './ApiKeyLabelCell.vue';
@@ -165,7 +165,17 @@ const headers = computed<Array<TableHeader<ApiKey>>>(() => [
 			@click:row="onRowClick"
 		>
 			<template #[`item.label`]="{ item }">
-				<ApiKeyLabelCell :label="item.label" :api-key="item.apiKey" />
+				<div :class="$style.labelCell">
+					<ApiKeyLabelCell :label="item.label" :api-key="item.apiKey" />
+					<N8nBadge
+						v-if="item.managedByEnv"
+						variant="outline"
+						size="xsmall"
+						data-test-id="api-key-managed-by-env-badge"
+					>
+						{{ i18n.baseText('settings.api.view.managedByEnv') }}
+					</N8nBadge>
+				</div>
 			</template>
 			<template #[`item.owner`]="{ item }">
 				<ApiKeyOwnerCell v-if="item.owner" :owner="item.owner" :is-current-user="isOwn(item)" />
@@ -184,7 +194,7 @@ const headers = computed<Array<TableHeader<ApiKey>>>(() => [
 				</N8nText>
 			</template>
 			<template #[`item.actions`]="{ item }">
-				<div :class="$style.rowActions" @click.stop>
+				<div v-if="!item.managedByEnv" :class="$style.rowActions" @click.stop>
 					<N8nActionDropdown
 						:items="getRowActions(item)"
 						placement="bottom-end"
@@ -200,6 +210,12 @@ const headers = computed<Array<TableHeader<ApiKey>>>(() => [
 </template>
 
 <style lang="scss" module>
+.labelCell {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing--2xs);
+}
+
 .rowActions {
 	display: flex;
 	justify-content: flex-end;

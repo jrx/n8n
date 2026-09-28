@@ -22,6 +22,7 @@ import {
 import { randomUUID } from 'crypto';
 
 import { BadRequestError } from '@/errors/response-errors/bad-request.error';
+import { ConflictError } from '@/errors/response-errors/conflict.error';
 import { NotFoundError } from '@/errors/response-errors/not-found.error';
 import { UserManagementMailer } from '@/user-management/email';
 
@@ -238,6 +239,7 @@ export class PublicApiKeyService {
 			relations: { user: true },
 		});
 		if (!apiKey) throw new NotFoundError('API key not found');
+		this.ensureNotManagedByEnv(apiKey);
 
 		const result = await this.apiKeyRepository.delete({ id: apiKey.id });
 		if (!result.affected) throw new NotFoundError('API key not found');
@@ -274,6 +276,12 @@ export class PublicApiKeyService {
 		apiKeyId: string,
 		{ label, scopes }: UpdateApiKeyRequestDto,
 	) {
+		const apiKey = await this.apiKeyRepository.findOne({
+			where: { id: apiKeyId, userId: user.id, audience: API_KEY_AUDIENCE },
+		});
+		if (!apiKey) return;
+		this.ensureNotManagedByEnv(apiKey);
+
 		await this.apiKeyRepository.update({ id: apiKeyId, userId: user.id }, { label, scopes });
 	}
 
@@ -285,6 +293,7 @@ export class PublicApiKeyService {
 			where: { id: apiKeyId, userId: user.id, audience: API_KEY_AUDIENCE },
 		});
 		if (!apiKey) throw new NotFoundError('API key not found');
+		this.ensureNotManagedByEnv(apiKey);
 
 		const expiresAt = this.getApiKeyExpiration(apiKey.apiKey);
 		if (expiresAt !== null && expiresAt <= Math.floor(Date.now() / 1000)) {
@@ -300,6 +309,12 @@ export class PublicApiKeyService {
 		apiKey.apiKey = newApiKey;
 		apiKey.lastUsedAt = null;
 		return apiKey;
+	}
+
+	private ensureNotManagedByEnv(apiKey: ApiKey) {
+		if (apiKey.managedByEnv) {
+			throw new ConflictError('This API key is managed by environment variables');
+		}
 	}
 
 	private toRedactedApiKey(apiKeyRecord: ApiKey) {

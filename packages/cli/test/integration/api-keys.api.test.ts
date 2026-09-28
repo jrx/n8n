@@ -92,6 +92,7 @@ describe('Owner shell', () => {
 			scopes: ['workflow:create'],
 			audience: 'public-api',
 			lastUsedAt: null,
+			managedByEnv: false,
 		});
 
 		expect(newApiKey.expiresAt).toBeNull();
@@ -133,6 +134,7 @@ describe('Owner shell', () => {
 			scopes: ['workflow:create'],
 			audience: 'public-api',
 			lastUsedAt: null,
+			managedByEnv: false,
 		});
 
 		expect(newApiKey.expiresAt).toBe(expiresAt);
@@ -166,6 +168,7 @@ describe('Owner shell', () => {
 			scopes: ['user:create'],
 			audience: 'public-api',
 			lastUsedAt: null,
+			managedByEnv: false,
 		});
 
 		expect(newApiKey.expiresAt).toBe(expiresAt);
@@ -199,6 +202,7 @@ describe('Owner shell', () => {
 			scopes: ['user:create'],
 			audience: 'public-api',
 			lastUsedAt: null,
+			managedByEnv: false,
 		});
 	});
 
@@ -229,6 +233,7 @@ describe('Owner shell', () => {
 			scopes: ['user:create', 'workflow:create'],
 			audience: 'public-api',
 			lastUsedAt: null,
+			managedByEnv: false,
 		});
 	});
 
@@ -341,6 +346,7 @@ describe('Owner shell', () => {
 			scopes: ['workflow:create'],
 			audience: 'public-api',
 			lastUsedAt: null,
+			managedByEnv: false,
 			owner: expectedOwner,
 		});
 
@@ -355,6 +361,7 @@ describe('Owner shell', () => {
 			scopes: ['workflow:create'],
 			audience: 'public-api',
 			lastUsedAt: null,
+			managedByEnv: false,
 			owner: expectedOwner,
 		});
 	});
@@ -422,6 +429,7 @@ describe('Member', () => {
 			scopes: ['workflow:create'],
 			audience: 'public-api',
 			lastUsedAt: null,
+			managedByEnv: false,
 		});
 
 		expect(newApiKeyResponse.body.data.expiresAt).toBeNull();
@@ -455,6 +463,7 @@ describe('Member', () => {
 			scopes: ['workflow:create'],
 			audience: 'public-api',
 			lastUsedAt: null,
+			managedByEnv: false,
 		});
 
 		expect(newApiKey.expiresAt).toBe(expiresAt);
@@ -488,6 +497,7 @@ describe('Member', () => {
 			scopes: ['workflow:create'],
 			audience: 'public-api',
 			lastUsedAt: null,
+			managedByEnv: false,
 		});
 
 		expect(newApiKey.expiresAt).toBe(expiresAt);
@@ -567,6 +577,7 @@ describe('Member', () => {
 			scopes: ['workflow:create'],
 			audience: 'public-api',
 			lastUsedAt: null,
+			managedByEnv: false,
 			owner: expectedOwner,
 		});
 
@@ -581,6 +592,7 @@ describe('Member', () => {
 			scopes: ['workflow:create'],
 			audience: 'public-api',
 			lastUsedAt: null,
+			managedByEnv: false,
 			owner: expectedOwner,
 		});
 	});
@@ -775,6 +787,40 @@ describe('Cross-user behavior (admin scope)', () => {
 			expect.arrayContaining([ownerWithKey.apiKeys[0].id, memberWithKey.apiKeys[0].id]),
 		);
 		expect(ids).toHaveLength(2);
+	});
+
+	test('environment-managed keys are visible but cannot be changed through the API', async () => {
+		const ownerWithKey = await createOwnerWithApiKey();
+		const admin = await createAdmin();
+		const member = await createUser({ role: GLOBAL_MEMBER_ROLE });
+		const key = ownerWithKey.apiKeys[0];
+
+		await Container.get(ApiKeyRepository).update({ id: key.id }, { managedByEnv: true });
+		const storedKey = await Container.get(ApiKeyRepository).findOneByOrFail({ id: key.id });
+
+		const response = await testServer.authAgentFor(ownerWithKey).get('/api-keys').expect(200);
+
+		expect(response.body.data.items).toEqual(
+			expect.arrayContaining([expect.objectContaining({ id: key.id, managedByEnv: true })]),
+		);
+
+		await testServer
+			.authAgentFor(ownerWithKey)
+			.patch(`/api-keys/${key.id}`)
+			.send({ label: 'Updated label', scopes: ['workflow:create'] })
+			.expect(409);
+		await testServer.authAgentFor(ownerWithKey).post(`/api-keys/${key.id}/rotate`).expect(409);
+		await testServer.authAgentFor(ownerWithKey).delete(`/api-keys/${key.id}`).expect(409);
+		await testServer.authAgentFor(admin).delete(`/api-keys/${key.id}`).expect(409);
+		await testServer.authAgentFor(member).delete(`/api-keys/${key.id}`).expect(404);
+
+		const unchangedKey = await Container.get(ApiKeyRepository).findOneByOrFail({ id: key.id });
+		expect(unchangedKey).toMatchObject({
+			apiKey: storedKey.apiKey,
+			label: storedKey.label,
+			scopes: storedKey.scopes,
+			managedByEnv: true,
+		});
 	});
 
 	test('GET /api-keys returns only the caller’s keys for a member', async () => {
