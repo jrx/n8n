@@ -129,7 +129,7 @@ Auto-generated from the SQLite migrations in @n8n/db. Do not edit by hand.
 | [type_availability_policy_attachment](type_availability_policy_attachment.md) | 6 |  | table |
 | [type_availability_policy_scope](type_availability_policy_scope.md) | 8 |  | table |
 | [user](user.md) | 15 |  | table |
-| [user_api_keys](user_api_keys.md) | 9 |  | table |
+| [user_api_keys](user_api_keys.md) | 10 |  | table |
 | [user_favorites](user_favorites.md) | 4 |  | table |
 | [variables](variables.md) | 5 |  | table |
 | [webhook_entity](webhook_entity.md) | 6 |  | table |
@@ -1593,6 +1593,7 @@ erDiagram
   varchar_36_ id PK
   varchar_100_ label
   datetime_3_ lastUsedAt
+  boolean managedByEnv
   TEXT scopes
   datetime_3_ updatedAt
   varchar userId FK

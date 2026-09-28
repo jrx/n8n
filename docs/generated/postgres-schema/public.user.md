@@ -352,6 +352,7 @@ erDiagram
   varchar_36_ id
   varchar_100_ label
   timestamp_3__with_time_zone lastUsedAt
+  boolean managedByEnv
   json scopes
   timestamp_3__with_time_zone updatedAt
   uuid userId FK

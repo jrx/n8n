@@ -9,13 +9,23 @@ import type {
 } from '@n8n/typeorm';
 import { Brackets, DataSource, In, IsNull, Not, Repository } from '@n8n/typeorm';
 
+import { BaseRepository } from './base-repository';
 import { ApiKey, Project, ProjectRelation, User } from '../entities';
+import type { OperationContext } from '../services/transaction';
+import { TransactionRunner } from '../services/transaction';
 import { isUniqueConstraintError } from '../utils/is-unique-constraint-error';
 
 @Service()
-export class UserRepository extends Repository<User> {
-	constructor(dataSource: DataSource) {
-		super(User, dataSource.manager);
+export class UserRepository extends BaseRepository<User> {
+	constructor(dataSource: DataSource, transactionRunner: TransactionRunner) {
+		super(User, dataSource.manager, transactionRunner);
+	}
+
+	async findInstanceOwner(ctx: OperationContext): Promise<User | null> {
+		return await this.managerFor(ctx).findOne(User, {
+			where: { role: { slug: 'global:owner' } },
+			relations: { role: true },
+		});
 	}
 
 	async findManyByIds(

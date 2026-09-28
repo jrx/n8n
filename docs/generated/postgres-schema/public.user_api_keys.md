@@ -10,6 +10,7 @@
 | id | varchar(36) |  | false |  |  |  |
 | label | varchar(100) |  | false |  |  |  |
 | lastUsedAt | timestamp(3) with time zone |  | true |  |  |  |
+| managedByEnv | boolean | false | false |  |  | Identifies the instance API key managed through environment variables |
 | scopes | json |  | true |  |  |  |
 | updatedAt | timestamp(3) with time zone | CURRENT_TIMESTAMP(3) | false |  |  |  |
 | userId | uuid |  | false |  | [public.user](public.user.md) |  |
@@ -25,6 +26,7 @@
 | user_api_keys_createdAt_not_null | n | NOT NULL "createdAt" |
 | user_api_keys_id_not_null | n | NOT NULL id |
 | user_api_keys_label_not_null | n | NOT NULL label |
+| user_api_keys_managedByEnv_not_null | n | NOT NULL "managedByEnv" |
 | user_api_keys_updatedAt_not_null | n | NOT NULL "updatedAt" |
 | user_api_keys_userId_not_null | n | NOT NULL "userId" |
 
@@ -50,6 +52,7 @@ erDiagram
   varchar_36_ id
   varchar_100_ label
   timestamp_3__with_time_zone lastUsedAt
+  boolean managedByEnv
   json scopes
   timestamp_3__with_time_zone updatedAt
   uuid userId FK
