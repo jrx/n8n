@@ -55,6 +55,7 @@ const testApiKey: ApiKeyWithRawValue = {
 	expiresAt: 0,
 	scopes: ['user:create', 'user:list'],
 	lastUsedAt: null,
+	managedByEnv: false,
 	owner: {
 		id: 'u1',
 		firstName: 'Test',
@@ -129,6 +130,7 @@ describe('ApiKeyCreateOrEditModal', () => {
 			expiresAt: 0,
 			scopes: ['user:create', 'user:list'],
 			lastUsedAt: null,
+			managedByEnv: false,
 			owner: {
 				id: 'u1',
 				firstName: 'Test',
@@ -537,6 +539,24 @@ describe('ApiKeyCreateOrEditModal', () => {
 				).toBeInTheDocument(),
 			);
 			expect(queryByText(/has set up will stop working/)).not.toBeInTheDocument();
+		});
+	});
+
+	describe('env-managed key', () => {
+		test('disables fields and only shows the close action', async () => {
+			apiKeysStore.apiKeys = [{ ...testApiKey, managedByEnv: true }];
+
+			const { getByTestId, getByText, queryByText } = renderComponent({
+				props: { mode: 'edit', activeId: '123' },
+			});
+
+			await retry(() => expect(getByTestId('api-key-label')).toBeInTheDocument());
+
+			expect(getByText('View API Key')).toBeInTheDocument();
+			expect((getByTestId('api-key-label') as unknown as HTMLInputElement).disabled).toBe(true);
+			expect(queryByText('Save')).not.toBeInTheDocument();
+			expect(queryByText('Revoke')).not.toBeInTheDocument();
+			expect(getByTestId('api-key-readonly-close')).toBeInTheDocument();
 		});
 	});
 });

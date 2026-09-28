@@ -37,6 +37,7 @@ import { OAuthConsentPage } from './OAuthConsentPage';
 import { ProjectSettingsPage } from './ProjectSettingsPage';
 import { SecretsProviderSettingsPage } from './SecretsProviderSettingsPage';
 import { SecuritySettingsPage } from './SecuritySettingsPage';
+import { SettingsApiPage } from './SettingsApiPage';
 import { SettingsEnvironmentPage } from './SettingsEnvironmentPage';
 import { SettingsLogStreamingPage } from './SettingsLogStreamingPage';
 import { SettingsPersonalPage } from './SettingsPersonalPage';
@@ -99,6 +100,7 @@ export class n8nPage {
 	readonly npsSurvey: NpsSurveyPage;
 	readonly oauthConsent: OAuthConsentPage;
 	readonly projectSettings: ProjectSettingsPage;
+	readonly settingsApi: SettingsApiPage;
 	readonly settingsPersonal: SettingsPersonalPage;
 	readonly settingsLogStreaming: SettingsLogStreamingPage;
 	readonly templateCredentialSetup: TemplateCredentialSetupPage;
@@ -190,6 +192,7 @@ export class n8nPage {
 		this.npsSurvey = new NpsSurveyPage(page);
 		this.oauthConsent = new OAuthConsentPage(page);
 		this.projectSettings = new ProjectSettingsPage(page);
+		this.settingsApi = new SettingsApiPage(page);
 		this.settingsPersonal = new SettingsPersonalPage(page);
 		this.settingsLogStreaming = new SettingsLogStreamingPage(page);
 		this.templateCredentialSetup = new TemplateCredentialSetupPage(page);

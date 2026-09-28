@@ -134,11 +134,13 @@ const isOwnKey = computed(() => {
 	return apiKey.owner.id === usersStore.currentUser.id;
 });
 
+const isManagedByEnv = computed(() => currentApiKey.value?.managedByEnv === true);
+
 // Someone else's key is always view-only; own keys become view-only when the
 // role doesn't allow editing them.
 const isReadOnly = computed(() => {
 	if (!currentApiKey.value) return false;
-	return !isOwnKey.value || !rbacStore.hasScope('apiKey:update');
+	return isManagedByEnv.value || !isOwnKey.value || !rbacStore.hasScope('apiKey:update');
 });
 
 // Copy for "expires on X" / "expired on X" / "never expires", shared by the
@@ -470,6 +472,7 @@ async function handleEnterKey(event: KeyboardEvent) {
 				<template v-if="isReadOnly">
 					<div :class="$style.readonlyActions">
 						<N8nButton
+							v-if="!isManagedByEnv"
 							variant="destructive"
 							:label="i18n.baseText('settings.api.revoke.button')"
 							data-test-id="api-key-readonly-revoke"

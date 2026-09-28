@@ -25,6 +25,7 @@ function makeKey(overrides: Partial<ApiKey> = {}): ApiKey {
 		expiresAt: null,
 		scopes: ['user:create'],
 		lastUsedAt: null,
+		managedByEnv: false,
 		owner: ownerFixture,
 		...overrides,
 	};
@@ -109,5 +110,20 @@ describe('ApiKeyTable', () => {
 
 		expect(screen.queryByText('Owner')).toBeNull();
 		expect(screen.queryAllByTestId('api-key-owner-cell')).toHaveLength(0);
+	});
+
+	it('shows the environment badge and hides actions for an env-managed key', async () => {
+		renderComponent(ApiKeyTable, {
+			props: {
+				apiKeys: [makeKey({ managedByEnv: true })],
+				itemsLength: 1,
+				currentUserId: 'u1',
+			},
+		});
+
+		expect(await screen.findByTestId('api-key-managed-by-env-badge')).toHaveTextContent(
+			'Managed by environment',
+		);
+		expect(screen.queryByTestId('api-key-actions-toggle')).not.toBeInTheDocument();
 	});
 });

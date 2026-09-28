@@ -4120,6 +4120,7 @@
 	"settings.api.view.info.documentation": "documentation",
 	"settings.api.view.copy": "Make sure to copy your API key now as you will not be able to see this again.",
 	"settings.api.view.error": "Could not check if an api key already exists.",
+	"settings.api.view.managedByEnv": "Managed by environment",
 	"settings.api.view.modal.form.label": "Label",
 	"settings.api.view.modal.form.expiration": "Expiration",
 	"settings.api.view.modal.form.expirationText": "The API key will expire on {expirationDate}",
